@@ -1,0 +1,197 @@
+---
+title: "Shiny App - Final Project"
+author: "Jean Bezerra. `jbezerra6124@floridapoly.edu` ,Manuel Jimenez. `mjimenez9994@floridapoly.edu`"
+output: html_notebook
+---
+Shiny App for visualizing one-dimensional root finding methods
+
+import necessary functions
+```{r}
+source('fixedpoint.R')
+source('newtonraphson.R')
+source("bisection.R")
+```
+
+
+Shiny App Code:
+```{r}
+library(shiny)
+
+#ui creates the template that our objects will be placed in for display
+ui <- fluidPage(tabsetPanel(
+  #tabsetPanel creates multiple tabs where we can input any objects 
+#------------------------------------------------------------------------------------------------------------- 
+#this panel runs the fixedpoint code
+  tabPanel("Fixed Point Method",
+          headerPanel('One-Dimensional Root Finding App'),
+          sidebarPanel(
+
+            textInput(
+              inputId = "func", 
+              label = "Input function to find roots:",
+              value = "sin(x)"),
+            
+            textInput(
+              inputId = "guess",
+              label = "Input initial guess:",
+              value = "0"
+            ),
+            
+            submitButton("Plot Function!"),
+          ),
+  
+          mainPanel(
+            plotOutput("fixedpoint")
+          )
+  ),
+#-------------------------------------------------------------------------------------------------------------   
+  #this panel runs the newton code
+  tabPanel("Newton's Method",
+          titlePanel('One-Dimensional Root Finding App'),
+          helpText("This app takes an input from the user of a function, its known derivative, and an initial point. It then displays the function graph and the point at which a root has been found, according to the initial guess."),
+          
+          sidebarPanel(
+            textInput(
+              inputId = "newt.func", 
+              label = "Input function to find roots:",
+              value = "cos(x)"
+            ),
+            
+            textInput(
+              inputId = "newt.deriv",
+              label = "Input known function derivative:",
+              value = "-sin(x)"
+            ),
+            
+            textInput(
+              inputId = "newt.guess",
+              label = "Input initial guess:",
+              value = "0.5"
+            ),
+            
+            submitButton("Plot Function!"),
+          ),
+  
+          mainPanel(
+            plotOutput("newt.plot"),
+            verbatimTextOutput("newt.root")
+          ) 
+  ),
+#-------------------------------------------------------------------------------------------------------------   
+  #this panel runs the bisection code
+  tabPanel("Bisection",
+    titlePanel('One-Dimensional Root Finding App'),
+          helpText("This app takes an input from the user of a function of a single variable and two initial points. These points MUST bracket the desired root, and their function values must NOT have a positive product. It then displays the function graph and the point at which a root has been found, according to the initial points."),
+          
+          sidebarPanel(
+            textInput(
+              inputId = "bisec.func", 
+              label = "Input function to find roots:",
+              value = "cos(x)"
+            ),
+            
+            textInput(
+              inputId = "bisec.xleft",
+              label = "Input point left of the root:",
+              value = "0.5"
+            ),
+            
+            textInput(
+              inputId = "bisec.xright",
+              label = "Input point right of the root:",
+              value = "2"
+            ),
+            
+            submitButton("Plot Function!"),
+          ),
+  
+          mainPanel(
+            plotOutput("bisec.plot"),
+            verbatimTextOutput("bisec.root")
+          ) 
+  )
+))
+#*************************************************************************************************************
+#server interprets our input and output objects to display on the app
+server <- function(input, output) {
+  #output object handles the plotting for fixed point
+  output$fixedpoint <- renderPlot({
+    f <- function(x) {eval(parse(text=input$func))}
+    
+    xroot <- fixedpoint(f, eval(parse(text=input$guess)))
+    curve(f, from = -5, to = 5, type = 'l',n = 1000)
+    abline(h = 0,v = 0)
+    points(xroot, y=0, col = 'red')
+    cat("test")
+  })
+#------------------------------------------------------------------------------------------------------------- 
+  #these output objects handle newton
+  output$newt.plot <- renderPlot({
+    f <- function(x) {#newtons method requires a vector of (function value, derivative value)
+      fx <- eval(parse(text=input$newt.func))
+      dfx <- eval(parse(text=input$newt.deriv))
+      return(c(fx, dfx))
+      }
+    xroot <- newtonraphson(f, eval(parse(text=input$newt.guess)))
+    
+    curveFx <- function(x){eval(parse(text=input$newt.func))}
+    curve(curveFx, from = -5, to = 5, type = 'l',n = 1000, lwd = 2)
+    abline(h = 0,v = 0)
+    points(xroot, y=0, col = 'blue', pch = 19, cex = 2)
+    title("Newton-Raphson Method")
+  })
+  
+  output$newt.root <- renderPrint({ 
+       f <- function(x) {#newton method requires a vector of (function value, derivative value)
+        fx <- eval(parse(text=input$newt.func))
+        dfx <- eval(parse(text=input$newt.deriv))
+        return(c(fx, dfx))
+        }
+       xroot <- newtonraphson(f, eval(parse(text=input$newt.guess)))
+       print(paste0("The root is found at x = ", xroot))
+     })
+#-------------------------------------------------------------------------------------------------------------
+  #these output objects handle bisection
+  output$bisec.plot <- renderPlot({
+    f <- function(x) {eval(parse(text=input$bisec.func))}
+    xroot <- bisection(f, eval(parse(text=input$bisec.xleft)), eval(parse(text=input$bisec.xright)))
+    
+    curveFx <- function(x){eval(parse(text=input$bisec.func))}
+    curve(curveFx, from = -5, to = 5, type = 'l',n = 1000, lwd = 2)
+    abline(h = 0,v = 0)
+    points(xroot, y=0, col = 'blue', pch = 19, cex = 2)
+    title("Bisection Method")
+  })
+  
+  output$bisec.root <- renderPrint({ 
+       f <- function(x) {eval(parse(text=input$newt.func))}
+       xroot <- bisection(f, eval(parse(text=input$bisec.xleft)), eval(parse(text=input$bisec.xright)))
+       print(paste0("The root is found at x = ", xroot))
+     })
+  
+  
+}
+
+shinyApp(ui = ui, server = server)
+```
+```{r}
+ui = basicPage(
+    numericInput("num", label = "Make changes", value = 1),
+    actionButton("update" ,"Update View", icon("refresh"),
+                 class = "btn btn-primary"),
+    helpText("When you click the button above, you should see",
+             "the output below update to reflect the value you",
+             "entered at the top:"),
+    verbatimTextOutput("value")
+  )
+
+  server = function(input, output) {
+     output$value <- renderPrint({ 
+       input$update
+       isolate(input$num)
+     })
+  }
+shinyApp(ui = ui, server = server)
+```
+
+
