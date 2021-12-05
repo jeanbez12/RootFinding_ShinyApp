@@ -122,7 +122,6 @@ server <- function(input, output) {
     curve(f, from = -5, to = 5, type = 'l',n = 1000)
     abline(h = 0,v = 0)
     points(xroot, y=0, col = 'red')
-    cat("test")
   })
 #------------------------------------------------------------------------------------------------------------- 
   #these output objects handle newton
