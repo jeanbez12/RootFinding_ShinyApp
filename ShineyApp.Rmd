@@ -16,23 +16,25 @@ source("bisection.R")
 Shiny App Code:
 ```{r}
 library(shiny)
+library(shinythemes)
 
 #ui creates the template that our objects will be placed in for display
-ui <- fluidPage(tabsetPanel(
+ui <- fluidPage(theme = shinytheme("slate"),tabsetPanel(
   #tabsetPanel creates multiple tabs where we can input any objects 
 #------------------------------------------------------------------------------------------------------------- 
 #this panel runs the fixedpoint code
   tabPanel("Fixed Point Method",
-          headerPanel('One-Dimensional Root Finding App'),
+          titlePanel('One-Dimensional Root Finding App'),
+          helpText("This tab takes an input from the user of a function and an initial point. It then displays the function graph and the point at which a root has been found, according to the initial guess."),
           sidebarPanel(
 
             textInput(
-              inputId = "func", 
+              inputId = "fixd.func", 
               label = "Input function to find roots:",
               value = "sin(x)"),
             
             textInput(
-              inputId = "guess",
+              inputId = "fixd.guess",
               label = "Input initial guess:",
               value = "0"
             ),
@@ -41,14 +43,15 @@ ui <- fluidPage(tabsetPanel(
           ),
   
           mainPanel(
-            plotOutput("fixedpoint")
+            plotOutput("fixd.plot"),
+            verbatimTextOutput("fixd.root")
           )
   ),
 #-------------------------------------------------------------------------------------------------------------   
   #this panel runs the newton code
   tabPanel("Newton's Method",
           titlePanel('One-Dimensional Root Finding App'),
-          helpText("This app takes an input from the user of a function, its known derivative, and an initial point. It then displays the function graph and the point at which a root has been found, according to the initial guess."),
+          helpText("This tab takes an input from the user of a function, its known derivative, and an initial point. It then displays the function graph and the point at which a root has been found, according to the initial guess."),
           
           sidebarPanel(
             textInput(
@@ -115,14 +118,23 @@ ui <- fluidPage(tabsetPanel(
 #server interprets our input and output objects to display on the app
 server <- function(input, output) {
   #output object handles the plotting for fixed point
-  output$fixedpoint <- renderPlot({
-    f <- function(x) {eval(parse(text=input$func))}
+  output$fixd.plot <- renderPlot({
+    f <- function(x) {eval(parse(text=input$fixd.func))}
     
-    xroot <- fixedpoint(f, eval(parse(text=input$guess)))
+    xroot <- fixedpoint(f, eval(parse(text=input$fixd.guess)))
     curve(f, from = -5, to = 5, type = 'l',n = 1000)
     abline(h = 0,v = 0)
-    points(xroot, y=0, col = 'red')
+    points(xroot, y=0, col = 'blue', pch = 19, cex = 2)
+    title("Fixed Point Method")
   })
+  
+  output$fixd.root <- renderPrint({ 
+       f <- function(x) {eval(parse(text=input$fixd.func))}
+    
+       xroot <- fixedpoint(f, eval(parse(text=input$fixd.guess)))
+       print(paste0("The root is found at x = ", xroot))
+     })
+  
 #------------------------------------------------------------------------------------------------------------- 
   #these output objects handle newton
   output$newt.plot <- renderPlot({
@@ -173,24 +185,6 @@ server <- function(input, output) {
 
 shinyApp(ui = ui, server = server)
 ```
-```{r}
-ui = basicPage(
-    numericInput("num", label = "Make changes", value = 1),
-    actionButton("update" ,"Update View", icon("refresh"),
-                 class = "btn btn-primary"),
-    helpText("When you click the button above, you should see",
-             "the output below update to reflect the value you",
-             "entered at the top:"),
-    verbatimTextOutput("value")
-  )
 
-  server = function(input, output) {
-     output$value <- renderPrint({ 
-       input$update
-       isolate(input$num)
-     })
-  }
-shinyApp(ui = ui, server = server)
-```
 
 
